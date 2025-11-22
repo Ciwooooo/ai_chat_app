@@ -25,8 +25,7 @@ spec:
       containers:
         - name: webapp
           # CHANGE THIS: Replace YOUR_GITHUB_USERNAME with your GitHub username
-          # Example: ghcr.io/johndoe/ai-chat:latest
-          image: ghcr.io/Ciwooooo/ai-chat-app:latest
+          image: ghcr.io/ciwooooo/ai-chat-app:latest
           
           # Always pull to get latest image
           imagePullPolicy: Always

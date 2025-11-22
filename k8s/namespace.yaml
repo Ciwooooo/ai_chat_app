@@ -11,4 +11,3 @@ metadata:
   labels:
     # Labels help identify and filter resources
     app.kubernetes.io/name: ai-chat
-    app.kubernetes.io/description: "AI Chat Application"
