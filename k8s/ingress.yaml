@@ -1,0 +1,30 @@
+# Ingress: Routes external traffic to the webapp
+# This allows you to access the app at http://ai-chat in your browser.
+# Requires the NGINX Ingress Controller to be enabled in Minikube.
+#
+# Usage: kubectl apply -f k8s/ingress.yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-chat-ingress
+  namespace: ai-chat
+  annotations:
+    # Use NGINX ingress controller
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  # Specify the ingress class (nginx)
+  ingressClassName: nginx
+  
+  rules:
+    # Route traffic for hostname "ai-chat" to our webapp
+    - host: ai-chat
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ai-chat-webapp
+                port:
+                  number: 80

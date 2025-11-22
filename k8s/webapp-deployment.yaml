@@ -1,0 +1,74 @@
+# Webapp Deployment: Runs your AI Chat application
+# This pulls the Docker image from GitHub Container Registry.
+#
+# IMPORTANT: Replace YOUR_GITHUB_USERNAME with your actual GitHub username!
+#
+# Usage: kubectl apply -f k8s/webapp-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-chat-webapp
+  namespace: ai-chat
+  labels:
+    app: ai-chat-webapp
+spec:
+  replicas: 1
+  
+  selector:
+    matchLabels:
+      app: ai-chat-webapp
+  
+  template:
+    metadata:
+      labels:
+        app: ai-chat-webapp
+    spec:
+      containers:
+        - name: webapp
+          # CHANGE THIS: Replace YOUR_GITHUB_USERNAME with your GitHub username
+          # Example: ghcr.io/johndoe/ai-chat:latest
+          image: ghcr.io/YOUR_GITHUB_USERNAME/ai-chat-app:latest
+          
+          # Always pull to get latest image
+          imagePullPolicy: Always
+          
+          ports:
+            - containerPort: 8000
+              name: http
+          
+          # Environment variables
+          # These configure the app to connect to Ollama inside the cluster
+          env:
+            - name: AI_CHAT_LLM_BASE_URL
+              # "ollama" is the service name from ollama-service.yaml
+              value: "http://ollama:11434/v1"
+            - name: AI_CHAT_LLM_MODEL
+              value: "llama3.2:1b"
+          
+          # Resource limits
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          
+          # Readiness probe: Is the app ready for traffic?
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          
+          # Liveness probe: Is the app still running?
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3

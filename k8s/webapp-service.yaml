@@ -1,0 +1,23 @@
+# Webapp Service: Internal endpoint for the chat application
+# The Ingress will route external traffic to this service.
+#
+# Usage: kubectl apply -f k8s/webapp-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-chat-webapp
+  namespace: ai-chat
+  labels:
+    app: ai-chat-webapp
+spec:
+  type: ClusterIP
+  
+  selector:
+    app: ai-chat-webapp
+  
+  ports:
+    - name: http
+      port: 80            # External port (what Ingress connects to)
+      targetPort: 8000    # Internal port (what the app listens on)
+      protocol: TCP
