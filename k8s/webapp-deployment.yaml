@@ -1,8 +1,6 @@
 # Webapp Deployment: Runs your AI Chat application
 # This pulls the Docker image from GitHub Container Registry.
 #
-# IMPORTANT: Replace YOUR_GITHUB_USERNAME with your actual GitHub username!
-#
 # Usage: kubectl apply -f k8s/webapp-deployment.yaml
 
 apiVersion: apps/v1
@@ -28,7 +26,7 @@ spec:
         - name: webapp
           # CHANGE THIS: Replace YOUR_GITHUB_USERNAME with your GitHub username
           # Example: ghcr.io/johndoe/ai-chat:latest
-          image: ghcr.io/YOUR_GITHUB_USERNAME/ai-chat-app:latest
+          image: ghcr.io/Ciwooooo/ai-chat-app:latest
           
           # Always pull to get latest image
           imagePullPolicy: Always
