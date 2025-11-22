@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/ai-chat-app
 
 jobs:
   lint-and-test:
@@ -60,7 +60,7 @@ jobs:
           retention-days: 7
 
   build-and-push-image:
-    name: Build & Push Container
+    name: Build & Push Container 
     runs-on: ubuntu-latest
     needs: [lint-and-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -83,5 +83,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ghcr.io/ciwooooo/ai-chat-app:latest
+            ghcr.io/ciwooooo/ai-chat-app:${{ github.sha }}
