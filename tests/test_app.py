@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 
 from ai_chat.app import app
 
-
 client = TestClient(app)
 
 

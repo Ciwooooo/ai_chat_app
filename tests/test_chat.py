@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from ai_chat.chat import get_llm_client, chat_completion
+from ai_chat.chat import chat_completion, get_llm_client
 
 
 def test_get_llm_client():

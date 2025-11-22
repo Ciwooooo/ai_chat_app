@@ -7,8 +7,8 @@ This module contains the main web application including:
 - Health check for Kubernetes probes
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
@@ -17,7 +17,6 @@ from pydantic import BaseModel
 
 from ai_chat.chat import chat_completion
 from ai_chat.config import settings
-
 
 # ---------------------------------------------------------------------------
 # Conversation Storage
@@ -41,165 +40,165 @@ HTML_TEMPLATE = """
     <title>{{ title }}</title>
     <style>
         /* Reset and base styles */
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eee; 
-            min-height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        
+
         /* Main container */
-        .container { 
-            max-width: 900px; 
-            margin: 0 auto; 
-            padding: 20px; 
-            flex: 1; 
-            display: flex; 
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+            display: flex;
             flex-direction: column;
             width: 100%;
         }
-        
+
         /* Header */
-        h1 { 
-            text-align: center; 
-            margin-bottom: 20px; 
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
             color: #00d9ff;
             font-size: 2rem;
         }
-        
+
         /* Chat messages container */
-        .chat-box { 
-            flex: 1; 
-            overflow-y: auto; 
-            border: 1px solid #333; 
-            border-radius: 12px; 
-            padding: 20px; 
-            margin-bottom: 15px; 
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
             background: rgba(22, 33, 62, 0.8);
             min-height: 400px;
             max-height: 60vh;
         }
-        
+
         /* Individual message */
-        .message { 
-            margin-bottom: 15px; 
-            padding: 12px 16px; 
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
             border-radius: 12px;
             line-height: 1.5;
             animation: fadeIn 0.3s ease;
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         /* User messages - right aligned, blue */
-        .message.user { 
+        .message.user {
             background: linear-gradient(135deg, #0f3460 0%, #1a4a7a 100%);
-            margin-left: 20%; 
+            margin-left: 20%;
             border-bottom-right-radius: 4px;
         }
-        
+
         /* Assistant messages - left aligned, dark */
-        .message.assistant { 
+        .message.assistant {
             background: rgba(26, 26, 46, 0.9);
-            border: 1px solid #333; 
+            border: 1px solid #333;
             margin-right: 20%;
             border-bottom-left-radius: 4px;
         }
-        
+
         /* Role label */
-        .role { 
-            font-size: 0.7rem; 
-            color: #888; 
-            margin-bottom: 6px; 
+        .role {
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 6px;
             text-transform: uppercase;
             font-weight: 600;
             letter-spacing: 0.5px;
         }
-        
+
         /* Message content */
         .content {
             white-space: pre-wrap;
             word-wrap: break-word;
         }
-        
+
         /* Input form */
-        form { 
-            display: flex; 
-            gap: 10px; 
+        form {
+            display: flex;
+            gap: 10px;
         }
-        
+
         /* Text input */
-        input[type="text"] { 
-            flex: 1; 
-            padding: 14px 18px; 
-            border: 1px solid #333; 
-            border-radius: 12px; 
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 18px;
+            border: 1px solid #333;
+            border-radius: 12px;
             background: rgba(22, 33, 62, 0.9);
-            color: #eee; 
+            color: #eee;
             font-size: 16px;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-        
+
         input[type="text"]:focus {
             outline: none;
             border-color: #00d9ff;
             box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
         }
-        
+
         input[type="text"]::placeholder {
             color: #666;
         }
-        
+
         /* Buttons */
-        button { 
-            padding: 14px 28px; 
+        button {
+            padding: 14px 28px;
             background: linear-gradient(135deg, #00d9ff 0%, #00b8d4 100%);
-            color: #1a1a2e; 
-            border: none; 
-            border-radius: 12px; 
-            cursor: pointer; 
+            color: #1a1a2e;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
             font-weight: 600;
             font-size: 15px;
             transition: transform 0.1s, box-shadow 0.2s;
         }
-        
-        button:hover { 
+
+        button:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0, 217, 255, 0.3);
         }
-        
+
         button:active {
             transform: translateY(0);
         }
-        
+
         /* Clear button */
-        .clear-btn { 
+        .clear-btn {
             background: linear-gradient(135deg, #e94560 0%, #c73e54 100%);
-            color: white; 
+            color: white;
         }
-        
-        .clear-btn:hover { 
+
+        .clear-btn:hover {
             box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
         }
-        
+
         /* Empty state */
         .empty-state {
             text-align: center;
             color: #666;
             padding: 60px 20px;
         }
-        
+
         .empty-state .icon {
             font-size: 3rem;
             margin-bottom: 15px;
@@ -209,7 +208,7 @@ HTML_TEMPLATE = """
 <body>
     <div class="container">
         <h1>🤖 {{ title }}</h1>
-        
+
         <div class="chat-box" id="chat-box">
             {% if messages %}
                 {% for msg in messages %}
@@ -225,13 +224,13 @@ HTML_TEMPLATE = """
                 </div>
             {% endif %}
         </div>
-        
+
         <form method="post" action="/chat">
-            <input 
-                type="text" 
-                name="message" 
-                placeholder="Type your message..." 
-                autofocus 
+            <input
+                type="text"
+                name="message"
+                placeholder="Type your message..."
+                autofocus
                 required
                 autocomplete="off"
             >
@@ -239,7 +238,7 @@ HTML_TEMPLATE = """
             <button type="submit" formaction="/clear" class="clear-btn">Clear</button>
         </form>
     </div>
-    
+
     <script>
         // Auto-scroll to bottom of chat
         const chatBox = document.getElementById('chat-box');
