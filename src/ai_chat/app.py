@@ -254,10 +254,11 @@ HTML_TEMPLATE = """
 # FastAPI Application
 # ---------------------------------------------------------------------------
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan handler.
-    
+
     This runs when the app starts and stops.
     We use it to clear conversation history on startup.
     """
@@ -280,13 +281,16 @@ app = FastAPI(
 # Pydantic Models for API
 # ---------------------------------------------------------------------------
 
+
 class ChatRequest(BaseModel):
     """Request model for the chat API endpoint."""
+
     message: str
 
 
 class ChatResponse(BaseModel):
     """Response model for the chat API endpoint."""
+
     response: str
     history: list[dict[str, str]]
 
@@ -295,121 +299,97 @@ class ChatResponse(BaseModel):
 # Routes
 # ---------------------------------------------------------------------------
 
+
 @app.get("/", response_class=HTMLResponse)
 async def index() -> HTMLResponse:
     """Render the main chat interface.
-    
+
     Returns the HTML page with the current conversation history.
     """
     template = Template(HTML_TEMPLATE)
-    html = template.render(
-        title=settings.app_name,
-        messages=conversation_history
-    )
+    html = template.render(title=settings.app_name, messages=conversation_history)
     return HTMLResponse(content=html)
 
 
 @app.post("/chat", response_class=HTMLResponse)
 async def chat_web(message: str = Form(...)) -> HTMLResponse:
     """Handle chat form submission from the web interface.
-    
+
     Args:
         message: The user's message from the form.
-    
+
     Returns:
         The updated HTML page with the new messages.
     """
     # Add user message to history
-    conversation_history.append({
-        "role": "user",
-        "content": message
-    })
-    
+    conversation_history.append({"role": "user", "content": message})
+
     try:
         # Get response from LLM
         response = chat_completion(conversation_history)
-        
+
         # Add assistant response to history
-        conversation_history.append({
-            "role": "assistant",
-            "content": response
-        })
+        conversation_history.append({"role": "assistant", "content": response})
     except Exception as e:
         # If LLM fails, show error in chat
-        conversation_history.append({
-            "role": "assistant",
-            "content": f"Sorry, I encountered an error: {e}"
-        })
-    
+        conversation_history.append(
+            {"role": "assistant", "content": f"Sorry, I encountered an error: {e}"}
+        )
+
     # Re-render the page with updated history
     template = Template(HTML_TEMPLATE)
-    html = template.render(
-        title=settings.app_name,
-        messages=conversation_history
-    )
+    html = template.render(title=settings.app_name, messages=conversation_history)
     return HTMLResponse(content=html)
 
 
 @app.post("/clear", response_class=HTMLResponse)
 async def clear_chat() -> HTMLResponse:
     """Clear the conversation history.
-    
+
     Returns:
         The HTML page with empty conversation.
     """
     conversation_history.clear()
-    
+
     template = Template(HTML_TEMPLATE)
-    html = template.render(
-        title=settings.app_name,
-        messages=conversation_history
-    )
+    html = template.render(title=settings.app_name, messages=conversation_history)
     return HTMLResponse(content=html)
 
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_api(request: ChatRequest) -> ChatResponse:
     """API endpoint for programmatic chat access.
-    
+
     This endpoint is useful for:
     - Testing the chat functionality
     - Building other clients that talk to this service
     - Integration with other systems
-    
+
     Args:
         request: ChatRequest with the user's message.
-    
+
     Returns:
         ChatResponse with the assistant's response and full history.
     """
     # Add user message
-    conversation_history.append({
-        "role": "user",
-        "content": request.message
-    })
-    
+    conversation_history.append({"role": "user", "content": request.message})
+
     # Get LLM response
     response = chat_completion(conversation_history)
-    
+
     # Add assistant response
-    conversation_history.append({
-        "role": "assistant",
-        "content": response
-    })
-    
-    return ChatResponse(
-        response=response,
-        history=conversation_history.copy()
-    )
+    conversation_history.append({"role": "assistant", "content": response})
+
+    return ChatResponse(response=response, history=conversation_history.copy())
 
 
 @app.get("/health")
 async def health() -> dict[str, str]:
     """Health check endpoint for Kubernetes liveness/readiness probes.
-    
+
     Kubernetes will call this endpoint periodically to check if the
     application is running and ready to accept traffic.
-    
+
     Returns:
         Simple status dictionary.
     """
@@ -420,14 +400,15 @@ async def health() -> dict[str, str]:
 # Entry Point
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     """Entry point for running the application.
-    
+
     This is called when you run `ai-chat` from the command line
     (defined in pyproject.toml [project.scripts]).
     """
     import uvicorn
-    
+
     uvicorn.run(
         app,
         host="0.0.0.0",  # Listen on all interfaces
