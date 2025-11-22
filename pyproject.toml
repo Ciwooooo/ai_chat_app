@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-chat"
+version = "0.1.0"
+description = "A simple chat webapp using a local LLM"
+readme = "README.md"
+requires-python = ">=3.12"
+
+# Production dependencies - what the app needs to run
+dependencies = [
+    "fastapi>=0.109.0",         # Web framework
+    "uvicorn[standard]>=0.27.0", # ASGI server to run FastAPI
+    "openai>=1.12.0",            # OpenAI client (works with Ollama)
+    "pydantic>=2.0.0",           # Data validation
+    "pydantic-settings>=2.0.0",  # Settings management from env vars
+    "jinja2>=3.1.0",             # HTML templating
+]
+
+# Development dependencies - only needed for development
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",        # Testing framework
+    "pytest-asyncio>=0.23.0", # Async test support
+    "httpx>=0.26.0",        # HTTP client for testing FastAPI
+    "ruff>=0.2.0",          # Fast linter and formatter
+    "mypy>=1.8.0",          # Static type checker
+]
+
+# CLI entry point - allows running `ai-chat` command after install
+[project.scripts]
+ai-chat = "ai_chat.app:main"
+
+# Tell hatch where to find our package
+[tool.hatch.build.targets.wheel]
+packages = ["src/ai_chat"]
+
+# Ruff linter configuration
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming
+    "W",   # pycodestyle warnings
+    "UP",  # pyupgrade
+]
+
+# Pytest configuration
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+# MyPy type checker configuration
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
