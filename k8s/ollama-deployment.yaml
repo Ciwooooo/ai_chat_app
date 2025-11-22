@@ -1,0 +1,78 @@
+# Ollama Deployment: Runs the LLM server inside Kubernetes
+# This creates a Pod with the Ollama container that serves AI models.
+#
+# Usage: kubectl apply -f k8s/ollama-deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ai-chat
+  labels:
+    app: ollama
+spec:
+  # Only 1 replica - LLM is resource-intensive
+  replicas: 1
+  
+  # How to find Pods belonging to this Deployment
+  selector:
+    matchLabels:
+      app: ollama
+  
+  # Pod template - defines what each Pod looks like
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          
+          # Port that Ollama listens on
+          ports:
+            - containerPort: 11434
+              name: http
+          
+          # Resource requests and limits
+          # Adjust based on your machine's capacity
+          resources:
+            requests:
+              memory: "2Gi"    # Minimum memory needed
+              cpu: "500m"      # 0.5 CPU cores
+            limits:
+              memory: "4Gi"    # Maximum memory allowed
+              cpu: "2000m"     # 2 CPU cores
+          
+          # Persistent storage for downloaded models
+          # Using emptyDir means models are re-downloaded on pod restart
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+          
+          # Readiness probe: Is Ollama ready to accept requests?
+          # Kubernetes won't send traffic until this passes
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 11434
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+          
+          # Liveness probe: Is Ollama still running?
+          # Kubernetes will restart the pod if this fails
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 11434
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+      
+      # Volume definitions
+      volumes:
+        - name: ollama-data
+          # emptyDir: temporary storage that's deleted when pod stops
+          # For production, consider using a PersistentVolumeClaim
+          emptyDir: {}

@@ -1,0 +1,14 @@
+# Namespace: An isolated environment for our application
+# All resources will be created in this namespace to keep them organized
+# and separate from other workloads in the cluster.
+#
+# Usage: kubectl apply -f k8s/namespace.yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-chat
+  labels:
+    # Labels help identify and filter resources
+    app.kubernetes.io/name: ai-chat
+    app.kubernetes.io/description: "AI Chat Application"

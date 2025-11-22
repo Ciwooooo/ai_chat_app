@@ -1,0 +1,27 @@
+# Ollama Service: Internal DNS name for the Ollama deployment
+# This allows the webapp to connect to Ollama using "http://ollama:11434"
+# instead of needing to know the Pod's IP address.
+#
+# Usage: kubectl apply -f k8s/ollama-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: ai-chat
+  labels:
+    app: ollama
+spec:
+  # ClusterIP: Only accessible within the cluster (not from outside)
+  type: ClusterIP
+  
+  # Route traffic to pods with label "app: ollama"
+  selector:
+    app: ollama
+  
+  # Port mapping
+  ports:
+    - name: http
+      port: 11434         # Port the service listens on
+      targetPort: 11434   # Port on the pod to forward to
+      protocol: TCP
