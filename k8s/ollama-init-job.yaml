@@ -1,0 +1,49 @@
+# Ollama Init Job: Pulls the LLM model after Ollama starts
+# This is a one-time job that downloads the model we need.
+# The job waits for Ollama to be ready, then pulls the model.
+#
+# Usage: kubectl apply -f k8s/ollama-init-job.yaml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-model-pull
+  namespace: ai-chat
+spec:
+  # Automatically delete the job 100 seconds after completion
+  ttlSecondsAfterFinished: 100
+  
+  # Retry up to 3 times if it fails
+  backoffLimit: 3
+  
+  template:
+    spec:
+      restartPolicy: OnFailure
+      
+      containers:
+        - name: model-pull
+          image: curlimages/curl:latest
+          
+          # Script to wait for Ollama and pull the model
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Waiting for Ollama to be ready..."
+              
+              # Loop until Ollama responds
+              until curl -s http://ollama:11434/ > /dev/null; do
+                echo "Ollama not ready yet, waiting..."
+                sleep 5
+              done
+              
+              echo "Ollama is ready! Pulling model..."
+              
+              # Pull the model using Ollama's API
+              # This may take several minutes depending on model size
+              curl -X POST http://ollama:11434/api/pull \
+                -H "Content-Type: application/json" \
+                -d '{"name": "llama3.2:1b"}'
+              
+              echo ""
+              echo "Model pull complete!"
